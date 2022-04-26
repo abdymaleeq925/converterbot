@@ -21,41 +21,51 @@ Have a nice day!
 @bot.message_handler()
 def download_file(message):
     url = message.text
-    try:
-        VID_ID = ''
-        VID_ID = validation.to_valid(url, VID_ID)
-        doc = VID_ID
-        bot.send_message(message.chat.id, "File is downloading..")
-        download.worker(VID_ID)
-    except Exception as e:
-        bot.send_message(message.chat.id, f"Something is wrong! Error '{e}'")
-    print(doc)
     
     keyboard = types.InlineKeyboardMarkup()
-    mp3 = types.InlineKeyboardButton(text="MP3", callback_data=f"{doc}_mp3")
-    mp4 = types.InlineKeyboardButton(text="MP4", callback_data=f"{doc}_mp4")
+    mp3 = types.InlineKeyboardButton(text="MP3", callback_data=f"{url}-mp3")
+    mp4 = types.InlineKeyboardButton(text="MP4", callback_data=f"{url}-mp4")
     keyboard.add(mp3, mp4)
     bot.send_message(message.chat.id, "Choose format you want to get:", reply_markup=keyboard)
 
 @bot.callback_query_handler(func=lambda call:True)
 def callback_inline(call):
-    doc = str(call.data).split('_')
-    file_name = doc[0]
+    message = call.message
+    doc = str(call.data).split('-')
+    url_name = doc[0]
     format = doc[1]
     if format == 'mp3':
-        mp4 = base_dir + file_name + '.mp4'
-        mp3 = base_dir + file_name + '.mp3'
+        try:
+            VID_ID = ''
+            VID_ID = validation.to_valid(url_name, VID_ID)
+            bot.send_message(message.chat.id, "File is downloading..")
+            download.worker(VID_ID)
+        except Exception as e:
+            bot.send_message(message.chat.id, f"Something is wrong! Error '{e}'")
+
+        mp4 = base_dir + VID_ID + '.mp4'
+        mp3 = base_dir + VID_ID + '.mp3'
         cmd = "ffmpeg -i {} -vn {}".format(mp4, mp3)
         os.system(cmd)
         os.system("afplay {}".format(mp3))
-        aud = open(f"{file_name}.mp3", 'rb')
-        bot.send_audio(call.message.chat.id, aud)
-        # os.remove(f"{file_name}.mp3")
-        # os.remove(f"{file_name}.mp4")
+        aud = open(f"{VID_ID}.mp3", 'rb')
+        bot.send_audio(message.chat.id, aud)
+        bot.send_message(message.chat.id, "Enjoy your file! Have a nice day!")
+        os.remove(f"{VID_ID}.mp3")
+        os.remove(f"{VID_ID}.mp4")
+
     elif format == 'mp4':
-        vid = open(f"{file_name}.mp4", 'rb')
-        bot.send_video(call.message.chat.id, vid)
-        bot.send_message(call.message.chat.id, "Thank you!")
-        # os.remove(f"{file_name}.mp4")  
+        try:
+            VID_ID = ''
+            VID_ID = validation.to_valid(url_name, VID_ID)
+            bot.send_message(message.chat.id, "File is downloading..")
+            download.worker(VID_ID)
+        except Exception as e:
+            bot.send_message(message.chat.id, f"Something is wrong! Error '{e}'")
+
+        vid = open(f"{VID_ID}.mp4", 'rb')
+        bot.send_video(message.chat.id, vid)
+        bot.send_message(message.chat.id, "Enjoy your file! Have a nice day!")
+        os.remove(f"{VID_ID}.mp4")  
         
 bot.infinity_polling()
